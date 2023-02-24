@@ -58,31 +58,65 @@ for filename in os.listdir(directory):
                 if code_length in all_codes_dict:
                     all_codes_dict[code_length][code] = code_dict
 
-            # Save the processed codes to a JSON file with the same name as the input file
-            output_filename = os.path.splitext(filename)[0] + "_List.json"
-            output_filepath = os.path.join(directory, output_filename)
-            with open(output_filepath, "w") as json_file:
-                json.dump(list(all_codes_dict.values()), json_file, separators=(',', ':'), indent=2)
-
         except Exception as e:
-            # If there was an error processing the file, add it to the list of failed files
+            # If an exception occurs, add the file to the failed files list and continue with the next file
             failed_files.append(filename)
             traceback.print_exc()
             continue
 
-# If there were failed files, show a message box with the list of failed files
-if failed_files:
-    tk.messagebox.showwarning("Failed Files", f"The following files failed to process: {', '.join(failed_files)}")
-
-# Save each group of codes to a separate JSON file
+# Save each group of codes to a separate JSON file with the header and footer
 for code_length, codes_dict in all_codes_dict.items():
     if codes_dict:
         # Convert the nested dictionary to a list of dictionaries
         codes_list = list(codes_dict.values())
 
+        # Create a new dictionary to store the header and footer lists
+        header_footer_dict = {
+            "hashedProjectId": "Please enter",
+            "attributeTypeId": 5,
+            "attributeName": "Please enter",
+            "description": "Please enter",
+            "inputTypeId": 26,
+            "inputValueList": codes_list,
+            "inputTypeName": "Dropdown list",
+            "valueRequired": True
+        }
+
         # Save the processed codes list to a JSON file with the appropriate name
-        output_filename = f"Classification Level {code_length}.json"
+        output_filename = f"Level{code_length}.json"
         output_filepath = os.path.join(directory, output_filename)
         with open(output_filepath, "w") as json_file:
-            json.dump(codes_list, json_file, separators=(',', ':'), indent=2)
+            json_file.write("[") # add [ character at the beginning
+            json.dump(header_footer_dict, json_file, separators=(',', ':'), indent=2)
 
+# Create a list to store the JSON filenames
+json_filenames = []
+
+# Add the JSON filenames to the list
+for filename in os.listdir(directory):
+    if filename.endswith(".json"):
+        json_filenames.append(filename)
+
+# Sort the list of JSON filenames
+json_filenames.sort()
+
+# Add a , character and a newline to the end of each JSON file except the last one
+for i in range(len(json_filenames) - 1):
+    filename = json_filenames[i]
+    filepath = os.path.join(directory, filename)
+    with open(filepath, "a") as json_file:
+        json_file.write(",\n")
+
+# Add a ] character to the end of the last JSON file
+if json_filenames:
+    last_filename = json_filenames[-1]
+    last_filepath = os.path.join(directory, last_filename)
+    with open(last_filepath, "a") as json_file:
+        json_file.write("]") # add ] character at the end
+
+
+
+
+
+
+        
