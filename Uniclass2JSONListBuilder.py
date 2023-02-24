@@ -21,6 +21,9 @@ failed_files = []
 # Create a variable to keep track of the user's choice to skip lines for all files
 skip_lines_all = False
 
+# Create a variable to keep track of the user's choice to concatenate 'value' to 'defaultName' for all files
+concatenate_all = False
+
 # Iterate over each file in the directory
 for filename in os.listdir(directory):
     # Check if the file is an Excel file
@@ -30,7 +33,7 @@ for filename in os.listdir(directory):
         try:
             # Ask user if they want to skip the first two lines
             if not skip_lines_all:
-                skip_lines = tk.messagebox.askyesnocancel("Skip Lines", f"Skip first two lines of {filename}?")
+                skip_lines = tk.messagebox.askyesnocancel("Skip Lines", f"Skip first two lines of {filename}? The files downloaded from NBS Uniclass Website have two lines above the header that will cause this program to fail. If you removed those lines in the Excel then press no")
 
                 if skip_lines is None:  # user clicked Cancel
                     break
@@ -38,6 +41,17 @@ for filename in os.listdir(directory):
                     skip_lines_all = tk.messagebox.askyesno("Skip Lines", "Skip first two lines for all files?")
             else:
                 skip_lines = True
+
+            # Ask user if they want to concatenate 'value' to 'defaultName'
+            if not concatenate_all:
+                concatenate = tk.messagebox.askyesnocancel("Concatenate", f"Would you like to add the codes to the Names separated by a dash? This may be required to prevent duplicates in the names as Asite wont accept that {filename}?")
+
+                if concatenate is None:  # user clicked Cancel
+                    break
+                elif concatenate:  # user clicked Yes
+                    concatenate_all = tk.messagebox.askyesno("Concatenate", "Add the codes to the names for all the files?")
+            else:
+                concatenate = True
 
             # Load Excel file into a pandas dataframe
             if skip_lines:
@@ -47,8 +61,12 @@ for filename in os.listdir(directory):
 
             # Iterate over each row in the dataframe
             for index, row in df.iterrows():
-                code = row["Code"]
                 default_name = row["Title"]
+                code = row["Code"]
+
+                # Concatenate 'value' to 'defaultName' if user chose to do so
+                if concatenate:
+                                        default_name = f"{default_name}-{code}"
 
                 # Create a dictionary with the "defaultName" and "value" properties
                 code_dict = {"defaultName": default_name, "value": code}
@@ -65,24 +83,6 @@ for filename in os.listdir(directory):
             continue
 
 # Save each group of codes to a separate JSON file with the header and footer
-for code_length, codes_dict in all_codes_dict.items():
-    if codes_dict:
-        # Convert the nested dictionary to a list of dictionaries
-        codes_list = list(codes_dict.values())
-
-        # Create a new dictionary to store the header and footer lists
-        header_footer_dict = {
-            "hashedProjectId": "Please enter",
-            "attributeTypeId": 5,
-            "attributeName": "Please enter",
-            "description": "Please enter",
-            "inputTypeId": 26,
-            "inputValueList": codes_list,
-            "inputTypeName": "Dropdown list",
-            "valueRequired": True
-        }
-
-        # Save each group of codes to a separate JSON file with the header and footer
 for code_length, codes_dict in all_codes_dict.items():
     if codes_dict:
         # Convert the nested dictionary to a list of dictionaries
@@ -123,3 +123,4 @@ if json_filenames:
     last_json_filepath = os.path.join(directory, last_json_filename)
     with open(last_json_filepath, "a") as last_json_file:
         last_json_file.write("]")
+
