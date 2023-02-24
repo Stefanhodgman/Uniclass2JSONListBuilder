@@ -82,41 +82,44 @@ for code_length, codes_dict in all_codes_dict.items():
             "valueRequired": True
         }
 
+        # Save each group of codes to a separate JSON file with the header and footer
+for code_length, codes_dict in all_codes_dict.items():
+    if codes_dict:
+        # Convert the nested dictionary to a list of dictionaries
+        codes_list = list(codes_dict.values())
+
+        # Create a new dictionary to store the header and footer lists
+        header_footer_dict = {
+            "hashedProjectId": "Please enter",
+            "attributeTypeId": 5,
+            "attributeName": "Please enter",
+            "description": "Please enter",
+            "inputTypeId": 26,
+            "inputValueList": codes_list,
+            "inputTypeName": "Dropdown list",
+            "valueRequired": True
+        }
+
         # Save the processed codes list to a JSON file with the appropriate name
         output_filename = f"Level{code_length}.json"
         output_filepath = os.path.join(directory, output_filename)
         with open(output_filepath, "w") as json_file:
-            json_file.write("[") # add [ character at the beginning
+            json_file.write("[")
             json.dump(header_footer_dict, json_file, separators=(',', ':'), indent=2)
-
-# Create a list to store the JSON filenames
-json_filenames = []
-
-# Add the JSON filenames to the list
-for filename in os.listdir(directory):
-    if filename.endswith(".json"):
-        json_filenames.append(filename)
-
-# Sort the list of JSON filenames
-json_filenames.sort()
+            json_file.write("]")
 
 # Add a , character and a newline to the end of each JSON file except the last one
+json_filenames = os.listdir(directory)
+json_filenames.sort()
 for i in range(len(json_filenames) - 1):
     filename = json_filenames[i]
     filepath = os.path.join(directory, filename)
     with open(filepath, "a") as json_file:
-        json_file.write(",\n")
+        json_file.write("\n")
 
-# Add a ] character to the end of the last JSON file
+# Add a closing square bracket to the end of the last JSON file
 if json_filenames:
-    last_filename = json_filenames[-1]
-    last_filepath = os.path.join(directory, last_filename)
-    with open(last_filepath, "a") as json_file:
-        json_file.write("]") # add ] character at the end
-
-
-
-
-
-
-        
+    last_json_filename = json_filenames[-1]
+    last_json_filepath = os.path.join(directory, last_json_filename)
+    with open(last_json_filepath, "a") as last_json_file:
+        last_json_file.write("]")
