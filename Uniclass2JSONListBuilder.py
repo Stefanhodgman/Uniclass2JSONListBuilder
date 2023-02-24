@@ -12,8 +12,8 @@ root.withdraw()
 # Open a file dialog to select a directory
 directory = filedialog.askdirectory(title="Select a directory")
 
-# Create a list to store the processed codes dictionaries
-all_codes_dict = {}
+# Create a nested dictionary to store the processed codes grouped by code length
+all_codes_dict = {1: {}, 2: {}, 3: {}, 4: {}}
 
 # Create a list to store the filenames of files that failed to process
 failed_files = []
@@ -45,36 +45,24 @@ for filename in os.listdir(directory):
             else:
                 df = pd.read_excel(filepath, sheet_name=0, usecols=["Code", "Title"])
 
-            # Create an empty dictionary to store the codes
-            codes_dict = {}
-
             # Iterate over each row in the dataframe
             for index, row in df.iterrows():
                 code = row["Code"]
                 default_name = row["Title"]
-                value = code
 
-                # Assume that the parent code is all but the last two characters of the code
-                parent_code = code[:-2]
+                # Create a dictionary with the "defaultName" and "value" properties
+                code_dict = {"defaultName": default_name, "value": code}
 
-                # Remove any trailing underscores from the parent code
-                parent_code = parent_code.rstrip("_")
+                # Determine the code length and add the code to the appropriate group in the nested dictionaries
+                code_length = len(code.split("_"))
+                if code_length in all_codes_dict:
+                    all_codes_dict[code_length][code] = code_dict
 
-                # If the parent code is not in the dictionary, add it as a key with an empty list as the value
-                if parent_code not in codes_dict:
-                    codes_dict[parent_code] = {"defaultName": default_name, "value": parent_code, "children": []}
-
-                # Add the code to the list of child codes for the parent code
-                codes_dict[parent_code]["children"].append({"defaultName": default_name, "value": value})
-
-            # Add the processed codes dictionary to the list of all codes dictionaries
-            all_codes_dict.update(codes_dict)
-
-            # Save the processed codes dictionary to a JSON file with the same name as the input file
+            # Save the processed codes to a JSON file with the same name as the input file
             output_filename = os.path.splitext(filename)[0] + "_List.json"
             output_filepath = os.path.join(directory, output_filename)
             with open(output_filepath, "w") as json_file:
-                json.dump(list(codes_dict.values()), json_file, separators=(',', ':'), indent=2)
+                json.dump(list(all_codes_dict.values()), json_file, separators=(',', ':'), indent=2)
 
         except Exception as e:
             # If there was an error processing the file, add it to the list of failed files
@@ -86,8 +74,15 @@ for filename in os.listdir(directory):
 if failed_files:
     tk.messagebox.showwarning("Failed Files", f"The following files failed to process: {', '.join(failed_files)}")
 
-# Convert the merged codes dictionary into a list and save it to a JSON file in the directory
-merged_codes_list = list(all_codes_dict.values())
-output_filepath = os.path.join(directory, "all_codes.json")
-with open(output_filepath, "w") as json_file:
-    json.dump(merged_codes_list, json_file, separators=(',', ':'), indent=2)
+# Save each group of codes to a separate JSON file
+for code_length, codes_dict in all_codes_dict.items():
+    if codes_dict:
+        # Convert the nested dictionary to a list of dictionaries
+        codes_list = list(codes_dict.values())
+
+        # Save the processed codes list to a JSON file with the appropriate name
+        output_filename = f"Level{code_length}.json"
+        output_filepath = os.path.join(directory, output_filename)
+        with open(output_filepath, "w") as json_file:
+            json.dump(codes_list, json_file, separators=(',', ':'), indent=2)
+
