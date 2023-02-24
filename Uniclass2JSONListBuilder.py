@@ -81,7 +81,7 @@ for code_length, codes_dict in all_codes_dict.items():
         codes_list = list(codes_dict.values())
 
         # Save the processed codes list to a JSON file with the appropriate name
-        output_filename = f"Level{code_length}.json"
+        output_filename = f"Classification Level {code_length}.json"
         output_filepath = os.path.join(directory, output_filename)
         with open(output_filepath, "w") as json_file:
             json.dump(codes_list, json_file, separators=(',', ':'), indent=2)
